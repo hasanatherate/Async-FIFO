@@ -22,6 +22,7 @@ An asynchronous FIFO is a common solution, but incorrect pointer synchronization
 - Metastability-related failures
 
 This FIFO follows the widely adopted **Cliff Cummings asynchronous FIFO architecture**.
+<img width="1024" height="578" alt="image" src="https://github.com/user-attachments/assets/a739e963-852e-47db-8da5-f66fca6a8f5a" />
 
 ---
 
@@ -47,27 +48,61 @@ between the two clocks.
 
 ---
 
-## Verification Environment Architecture
+---
 
-The verification environment is **class-based** and built without UVM to demonstrate
-core verification concepts clearly.
+## Signal Definitions
 
-### Components
+The FIFO interface and DUT signals are defined as follows, based directly on the implementation.
 
-- **Transaction**
-  - Encapsulates FIFO stimulus and observed outputs
-- **Generator**
-  - Produces constrained-random read/write transactions
-- **Driver**
-  - Drives write-side and read-side signals on independent clock domains
-- **Monitor**
-  - Samples DUT signals and collects functional coverage
-- **Scoreboard**
-  - Uses a reference queue to check data integrity
-- **Interface**
-  - Encapsulates DUT signals and protocol assertions
+### Clock & Reset Signals
 
-All components communicate using **SystemVerilog mailboxes**.
+| Signal     | Direction | Description |
+|-----------|-----------|-------------|
+| `wr_clk`  | Input     | Write clock for FIFO write domain |
+| `rd_clk`  | Input     | Read clock for FIFO read domain |
+| `wr_rst_n`| Input     | Active-low reset for write domain logic |
+| `rd_rst_n`| Input     | Active-low reset for read domain logic |
+
+Each clock domain has an independent reset, consistent with asynchronous FIFO design practices.
+
+---
+
+### Data & Control Signals
+
+| Signal | Width | Direction | Description |
+|------|-------|-----------|-------------|
+| `din`  | 8-bit | Input  | Data input written into FIFO |
+| `dout` | 8-bit | Output | Data output read from FIFO |
+| `wr_en`| 1-bit | Input  | Write enable signal |
+| `rd_en`| 1-bit | Input  | Read enable signal |
+
+Writes occur on the rising edge of `wr_clk` when `wr_en` is asserted and FIFO is not full.  
+Reads occur on the rising edge of `rd_clk` when `rd_en` is asserted and FIFO is not empty.
+
+---
+
+### Status Flags
+
+| Signal | Direction | Description |
+|-------|-----------|-------------|
+| `full`  | Output | Indicates FIFO is full; further writes are blocked |
+| `empty` | Output | Indicates FIFO is empty; further reads are blocked |
+
+- `full` is generated in the write clock domain using synchronized read pointer comparison  
+- `empty` is generated in the read clock domain using synchronized write pointer comparison  
+
+---
+
+### Internal Pointer Signals (Design-Level)
+
+| Signal | Description |
+|------|-------------|
+| `wptr_bin`, `rptr_bin` | Binary write/read pointers with extra MSB |
+| `wptr_gray`, `rptr_gray` | Gray-coded pointers for CDC |
+| `wq1_rptr`, `wq2_rptr` | Read pointer synchronized into write domain |
+| `rq1_wptr`, `rq2_wptr` | Write pointer synchronized into read domain |
+
+These internal signals are not exposed externally but are critical to safe clock-domain crossing and correct full/empty flag generation.
 
 ---
 
@@ -112,34 +147,10 @@ Concurrent assertions are implemented to validate protocol correctness in each c
 Assertions are clocked independently for write and read domains and disabled during reset,
 making them safe for asynchronous operation.
 
----
-
-## Simulation & Tools
-
-- **Language**: SystemVerilog
-- **Verification Style**: OOP, transaction-based
-- **Assertions**: SystemVerilog Assertions (SVA)
-- **Functional Coverage**: Covergroups and cross coverage
-- **Simulator**: Aldec Riviera-PRO (via EDA Playground)
 
 ---
+<img width="1879" height="527" alt="image" src="https://github.com/user-attachments/assets/49b76a04-4ea8-4f77-aafa-d88804551971" />
 
-## Key Learning Outcomes
-
-- Understanding of asynchronous FIFO design principles
-- Practical handling of clock-domain crossings (CDC)
-- Building reusable class-based verification environments
-- Applying constrained random stimulus effectively
-- Using functional coverage to guide verification
-- Writing safe, clock-domain-specific assertions
-
----
-
-## Notes
-
-This project focuses on **functional correctness and verification methodology**.
-Full regression management, code coverage, and coverage closure workflows are
-typically handled using industrial tools in large-scale environments.
 
 ---
 
