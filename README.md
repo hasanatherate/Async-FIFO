@@ -1,4 +1,3 @@
-# Async-FIFO
 # Asynchronous FIFO – Functional Verification using SystemVerilog
 
 ## Overview
