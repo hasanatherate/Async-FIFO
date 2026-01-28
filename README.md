@@ -152,7 +152,3 @@ making them safe for asynchronous operation.
 <img width="1879" height="527" alt="image" src="https://github.com/user-attachments/assets/49b76a04-4ea8-4f77-aafa-d88804551971" />
 
 
----
-
-## Author
-Verification project developed for learning and portfolio demonstration purposes.
